@@ -1,0 +1,52 @@
+# Disable the Gradle daemon for Continuous Integration servers as correctness
+# is usually a priority over speed in CI environments. Using a fresh
+# runtime for each build is more reliable since the runtime is completely
+# isolated from any previous builds.
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+stages:
+  - build
+  - test
+  - sonar
+  - docker
+
+build:
+  stage: build
+  script:
+    - ls
+    - pwd
+    - ./gradlew clean build assemble
+
+test:
+  stage: test
+  script:
+    - ls
+    - pwd
+    - ./gradlew test jacocoTestReport
+
+sonarqube:
+  stage: sonar
+  script:
+    - ls
+    - pwd
+    - ./gradlew sonar
+
+docker_clean_image:
+  stage: docker
+  script:
+    - ls
+    - pwd
+    - ./gradlew clean assemble
+    - docker stop dipadunia-server
+    - docker rm dipadunia-server
+    - docker rmi serverside-ind
+    - docker build -t serverside-ind .
+
+docker_container:
+  stage: docker
+  script:
+    - ls
+    - pwd
+    - docker run -d -p 8090:8080 --net=s3_individual_news_network --name=dipadunia-server serverside-ind
